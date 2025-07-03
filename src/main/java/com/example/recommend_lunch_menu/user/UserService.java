@@ -180,7 +180,6 @@ public class UserService {
 
     }
 
-    // TODO: 기상청 Open API 연결
     @Transactional
     private String getWeatherInfo() throws URISyntaxException {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
