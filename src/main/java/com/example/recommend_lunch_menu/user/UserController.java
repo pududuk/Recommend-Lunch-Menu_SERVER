@@ -33,7 +33,7 @@ public class UserController {
     @ApiResponse(responseCode = "1000", description = "요청에 성공하였습니다.", content = @Content(mediaType = "application/json"))
     @Parameters({
             @Parameter(name = "age", description = "나이", example = "27"),
-            @Parameter(name = "gender", description = "Male or Female", example = "Male"),
+            @Parameter(name = "gender", description = "male or female", example = "male"),
             @Parameter(name = "isLocalPreferred", description = "근거리 선호 여부", example = "false"),
             @Parameter(name = "isTolerateWaitTime", description = "대기시간 괜찮은지 여부", example = "false"),
             @Parameter(name = "foodPreferred", description = "음식 이름을 콤마로 구분", example = "파스타, 스테이크, 삼겹살"),
