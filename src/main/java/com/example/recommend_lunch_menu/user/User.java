@@ -46,6 +46,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = true)
     private String foodDislike;
 
+    @Column(nullable = true)
+    private Integer priceLimit;
+
     // Admin 설정
     @Column(nullable = false)
     private boolean isAdmin = false;

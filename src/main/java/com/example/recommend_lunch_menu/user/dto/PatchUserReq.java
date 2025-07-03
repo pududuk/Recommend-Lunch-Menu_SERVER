@@ -12,6 +12,7 @@ public class PatchUserReq {
     private String gender;
     private boolean isLocalPreferred;
     private boolean isTolerateWaitTime;
+    private Integer priceLimit;
     private String foodPreferred;
     private String foodDislike;
 }

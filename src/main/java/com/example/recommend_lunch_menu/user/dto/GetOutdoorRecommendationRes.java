@@ -9,12 +9,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class GetIndoorRecommendationRes {
+public class GetOutdoorRecommendationRes {
     private int rank;
     private String store;
-    private String corner;
     private String menu;
-    private int waiting_pred;
+    private int price;
     private int score;
     private String comment;
 }

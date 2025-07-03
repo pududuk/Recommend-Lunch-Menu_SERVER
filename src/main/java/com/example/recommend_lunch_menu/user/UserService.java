@@ -3,10 +3,7 @@ package com.example.recommend_lunch_menu.user;
 import com.example.recommend_lunch_menu.exception.BaseException;
 import com.example.recommend_lunch_menu.exception.BaseResponseStatus;
 import com.example.recommend_lunch_menu.sandi.SandiService;
-import com.example.recommend_lunch_menu.user.dto.GetIndoorRecommendationRes;
-import com.example.recommend_lunch_menu.user.dto.PatchUserReq;
-import com.example.recommend_lunch_menu.user.dto.PostUserReq;
-import com.example.recommend_lunch_menu.user.dto.WeatherInfo;
+import com.example.recommend_lunch_menu.user.dto.*;
 import com.example.recommend_lunch_menu.utils.*;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +38,9 @@ public class UserService {
     private static final int WAIT_TIME_INTOLERANCE = 12;
     private static final int WAIT_TIME_TOLERANCE = 30;
 
+    private static final int SHORT_DISTANCE = 1000;
+    private static final int LONG_DISTANCE = 2000;
+
     @Transactional
     public String setUserProfile(Long userId, PatchUserReq patchUserReq) throws BaseException {
         User user = utilService.findByUserIdWithValidation(userId);
@@ -50,46 +50,26 @@ public class UserService {
         user.setTolerateWaitTime(patchUserReq.isTolerateWaitTime());
         user.setFoodPreferred(patchUserReq.getFoodPreferred());
         user.setFoodDislike(patchUserReq.getFoodDislike());
+        user.setPriceLimit(patchUserReq.getPriceLimit());
 
         return "프로필 설정이 완료되었습니다.";
     }
 
     @Transactional
     public List<GetIndoorRecommendationRes> getIndoorRecommendation(Long userId) throws BaseException, URISyntaxException {
-        User user = utilService.findByUserIdWithValidation(userId);
-        Integer age = user.getAge();
-        String gender = user.getGender();
-        String foodPreferred = user.getFoodPreferred();
-        String foodDislike = user.getFoodDislike();
-
-        boolean isTolerateWaitTime = user.isTolerateWaitTime();
-        int waitLimit;
-        if(isTolerateWaitTime) {
-            waitLimit = WAIT_TIME_TOLERANCE;
-        } else {
-            waitLimit = WAIT_TIME_INTOLERANCE;
-        }
-
-        String weatherInfo = getWeatherInfo();
-
-        RestTemplate restTemplate = new RestTemplate();
+        GetUserPreferenceRes getUserPreferenceRes = getUserPreference(userId);
         // 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 요청 바디 설정
         Map<String, String> body = new HashMap<>();
-        body.put("age", age.toString());
-        body.put("gender", gender);
-        body.put("weather", weatherInfo.toString());
-        body.put("preferred", foodPreferred);
-        body.put("disliked", foodDislike);
-        body.put("waiting_limit", Integer.toString(waitLimit));
-
-        log.info("weather: {}", weatherInfo);
-        log.info("preferred: {}", foodPreferred);
-        log.info("disliked: {}", foodDislike);
-        log.info("waiting_limit: {}", waitLimit);
+        body.put("age", getUserPreferenceRes.getAge().toString());
+        body.put("gender", getUserPreferenceRes.getGender());
+        body.put("weather", getUserPreferenceRes.getWeatherInfo());
+        body.put("preferred", getUserPreferenceRes.getFoodPreferred());
+        body.put("disliked", getUserPreferenceRes.getFoodDislike());
+        body.put("waiting_limit", Integer.toString(getUserPreferenceRes.getWaitLimit()));
 
         try {
             /* <--------------------- Dummy -------------------> */
@@ -110,7 +90,7 @@ public class UserService {
                     res.setRank(Integer.parseInt(values[0].trim()));
                     res.setStore(values[1].trim());
                     res.setCorner(values[2].trim());
-
+                    res.setMenu(values[3].trim());
                     res.setWaiting_pred(Integer.parseInt(values[4].trim()));
                     res.setScore(Integer.parseInt(values[5].trim()));
                     res.setComment(values[6].trim());
@@ -124,6 +104,7 @@ public class UserService {
             }
             /* <--------------------- Dummy -------------------> */
 
+//            RestTemplate restTemplate = new RestTemplate();
 //            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
 //            ResponseEntity<String> responseEntity = restTemplate.exchange(
 //                    Constants.AI_SERVER_URL,
@@ -181,6 +162,133 @@ public class UserService {
     }
 
     @Transactional
+    public List<GetOutdoorRecommendationRes> getOutdoorRecommendation(Long userId) throws BaseException, URISyntaxException {
+        GetUserPreferenceRes getUserPreferenceRes = getUserPreference(userId);
+        // 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 요청 바디 설정
+        Map<String, String> body = new HashMap<>();
+        body.put("age", getUserPreferenceRes.getAge().toString());
+        body.put("gender", getUserPreferenceRes.getGender());
+        body.put("weather", getUserPreferenceRes.getWeatherInfo());
+        body.put("preferred", getUserPreferenceRes.getFoodPreferred());
+        body.put("disliked", getUserPreferenceRes.getFoodDislike());
+        body.put("distance", getUserPreferenceRes.getDistance().toString());
+        body.put("price_limit", getUserPreferenceRes.getPriceLimit().toString());
+
+        try {
+            /* <--------------------- Dummy -------------------> */
+            String message = "rank,store,menu,price,score,comment\n1,일편등심 마곡나루점,한우 쌈장찌개,7000,95,맑은 날에 시원하게 즐길 수 있는 메뉴입니다.\n2,무닌 마곡,명란구이,14000,90,세련된 맛의 메뉴로 맑은 날에 적합합니다.\n3,어부몽 코엑스마곡점,[황토가마] 고등어구이 반상,15000,85,맛있는 고등어구이로 선호도가 높을 것입니다.\n4,전일맥주 마곡역점,수제비조개탕,15000,80,맑은 날에도 부드러운 맛을 즐길 수 있는 메뉴입니다.\n5,봄이보리밥 마곡점,황금 고등어구이 반상,15000,75,맑은 날에 즐길 수 있는 정갈한 메뉴입니다.";
+            List<GetOutdoorRecommendationRes> resultList = new ArrayList<>();
+            // 줄 단위로 나누기
+            String[] lines = message.split("\n");
+            log.info("lines[0]: {}", lines[0]);
+            if (lines.length > 1) {
+                // 첫 줄은 헤더
+                String[] header = lines[0].split(",");
+                log.info("lines: 여기2");
+                for (int i = 1; i < lines.length; i++) {
+                    String[] values = lines[i].split(",", -1);
+                    if (values.length < 6) continue;
+
+                    GetOutdoorRecommendationRes res = new GetOutdoorRecommendationRes();
+                    res.setRank(Integer.parseInt(values[0].trim()));
+                    res.setStore(values[1].trim());
+                    res.setMenu(values[2].trim());
+                    res.setPrice(Integer.parseInt(values[3].trim()));
+                    res.setScore(Integer.parseInt(values[4].trim()));
+                    res.setComment(values[5].trim());
+
+                    resultList.add(res);
+                }
+
+                return resultList;
+            } else {
+                throw new BaseException(BaseResponseStatus.INVALID_JWT);
+            }
+            /* <--------------------- Dummy -------------------> */
+
+//            RestTemplate restTemplate = new RestTemplate();
+//            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
+//            ResponseEntity<String> responseEntity = restTemplate.exchange(
+//                    Constants.AI_SERVER_URL,
+//                    HttpMethod.POST,
+//                    requestEntity,
+//                    String.class
+//            );
+//
+//            String response = responseEntity.getBody();
+//            Gson gsonObj = new Gson();
+//            Map<?, ?> data = gsonObj.fromJson(response, Map.class);
+//            boolean isSuccess = (Boolean) data.get("successs");
+//            List<GetOutdoorRecommendationRes> resultList = new ArrayList<>();
+//            // 줄 단위로 나누기
+//            String[] lines = message.split("\n");
+//
+//            if (lines.length > 1) {
+//                // 첫 줄은 헤더
+//                String[] header = lines[0].split(",");
+//
+//                for (int i = 1; i < lines.length; i++) {
+//                    String[] values = lines[i].split(",", -1);
+//                    if (values.length < 6) continue;
+//
+//                    GetOutdoorRecommendationRes res = new GetOutdoorRecommendationRes();
+//                    res.setRank(Integer.parseInt(values[0].trim()));
+//                    res.setStore(values[1].trim());
+//                    res.setMenu(values[2].trim());
+//                    res.setPrice(Integer.parseInt(values[3].trim()));
+//                    res.setScore(Integer.parseInt(values[4].trim()));
+//                    res.setComment(values[5].trim());
+//
+//                    resultList.add(res);
+//                }
+//
+//                return resultList;
+//            } else {
+//                throw new BaseException(BaseResponseStatus.INVALID_JWT);
+//            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new BaseException(BaseResponseStatus.INVALID_AUTH_INPUT);
+        }
+
+    }
+
+    @Transactional
+    private GetUserPreferenceRes getUserPreference(Long userId) throws BaseException, URISyntaxException {
+        User user = utilService.findByUserIdWithValidation(userId);
+        int age = user.getAge();
+        String gender = user.getGender();
+        String foodPreferred = user.getFoodPreferred();
+        String foodDislike = user.getFoodDislike();
+        int priceLimit = user.getPriceLimit();
+
+        boolean isTolerateWaitTime = user.isTolerateWaitTime();
+        int waitLimit;
+        if(isTolerateWaitTime) {
+            waitLimit = WAIT_TIME_TOLERANCE;
+        } else {
+            waitLimit = WAIT_TIME_INTOLERANCE;
+        }
+
+        boolean isLocalPreferred = user.isLocalPreferred();
+        int distance;
+        if(isLocalPreferred) {
+            distance = SHORT_DISTANCE;
+        } else {
+            distance = LONG_DISTANCE;
+        }
+
+        String weatherInfo = getWeatherInfo();
+
+        return new GetUserPreferenceRes(age, gender, foodPreferred, foodDislike, waitLimit, distance, priceLimit, weatherInfo);
+    }
+
+    @Transactional
     private String getWeatherInfo() throws URISyntaxException {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
@@ -199,8 +307,6 @@ public class UserService {
 
         try {
             String weatherInfo = restTemplate.getForObject(uri, String.class);
-
-            System.out.println("weatherInfo = " + weatherInfo);
             Gson gsonObj = new Gson();
             Map<?, ?> responseMap = gsonObj.fromJson(weatherInfo, Map.class);
 
