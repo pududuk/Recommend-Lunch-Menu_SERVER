@@ -1,4 +1,4 @@
-package com.example.recommend_lunch_menu.scheduler.dto;
+package com.example.recommend_lunch_menu.sandi.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,10 +11,8 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @Getter
 @Setter
-@Component
-@ConfigurationProperties(prefix = "sandi.login-info")
 public class LoginInfo {
     private String username;
     private String password;
-    private String clientId;
+    private String clientId = "MOBILE";
 }

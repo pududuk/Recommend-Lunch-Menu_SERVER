@@ -6,4 +6,6 @@ public class Constants {
     public static String SANDI_OURHOME_SPACE_ID = "BST_000727";
     public static String SANDI_PULMUONE_SPACE_ID = "BST_000978";
     public static String SANDI_CJFRESH_SPACE_ID = "ST_0000290";
+    public static String JWT_ENCODING_KEY = "135b8378904571a649516713c9b3bbffc14f3464a3131504aec324cde5327b4d";
+    public static String AI_SERVER_URL = "http://127.0.0.1:8000";
 }

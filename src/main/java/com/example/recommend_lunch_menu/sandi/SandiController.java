@@ -2,12 +2,12 @@ package com.example.recommend_lunch_menu.sandi;
 
 import com.example.recommend_lunch_menu.exception.BaseException;
 import com.example.recommend_lunch_menu.exception.BaseResponse;
-import com.example.recommend_lunch_menu.scheduler.dto.LoginInfo;
+import com.example.recommend_lunch_menu.token.JwtService;
+import com.example.recommend_lunch_menu.user.dto.PostUserReq;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -15,17 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class SandiController {
 
     private final SandiService sandiService;
+    private final JwtService jwtService;
 
+    // Check Sandi Account Validation
     @PostMapping("/login")
-    public BaseResponse<String> loginUser() {
+    public BaseResponse<String> verifyUser(@RequestBody PostUserReq postUserReq) {
         try{
-            return new BaseResponse<>(sandiService.issueAccessToken());
+            return new BaseResponse<>(sandiService.verifyUser(postUserReq));
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }
     }
 
-    @GetMapping("/ourhome")
+    @GetMapping("/table/ourhome")
     public BaseResponse<String> getOurHomeWeekdayTable() {
         try{
             return new BaseResponse<>(sandiService.getOurHomeWeekdayTable());
@@ -34,7 +36,7 @@ public class SandiController {
         }
     }
 
-    @GetMapping("/cjfresh")
+    @GetMapping("/table/cjfresh")
     public BaseResponse<String> getCjFreshWeekdayTable() {
         try{
             return new BaseResponse<>(sandiService.getCjFreshWeekdayTable());
@@ -43,7 +45,7 @@ public class SandiController {
         }
     }
 
-    @GetMapping("/pulmuone")
+    @GetMapping("/table/pulmuone")
     public BaseResponse<String> getPulmuoneWeekdayTable() {
         try{
             return new BaseResponse<>(sandiService.getPulmuoneWeekdayTable());
@@ -51,4 +53,23 @@ public class SandiController {
             return new BaseResponse<>(exception.getStatus());
         }
     }
+
+    @GetMapping("/daily/ourhome")
+    public BaseResponse<List<String>> getOurHomeDailyMenu() {
+        try{
+            return new BaseResponse<>(sandiService.getOurHomeDailyMenu());
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    @GetMapping("/daily/cjfresh")
+    public BaseResponse<List<String>> getCjFreshDailyMenu() {
+        try{
+            return new BaseResponse<>(sandiService.getCjFreshDailyMenu());
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
 }
