@@ -3,10 +3,7 @@ package com.example.recommend_lunch_menu.user;
 import com.example.recommend_lunch_menu.exception.BaseException;
 import com.example.recommend_lunch_menu.exception.BaseResponse;
 import com.example.recommend_lunch_menu.token.JwtService;
-import com.example.recommend_lunch_menu.user.dto.GetIndoorRecommendationRes;
-import com.example.recommend_lunch_menu.user.dto.GetOutdoorRecommendationRes;
-import com.example.recommend_lunch_menu.user.dto.PatchUserReq;
-import com.example.recommend_lunch_menu.user.dto.PostUserReq;
+import com.example.recommend_lunch_menu.user.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -44,6 +41,18 @@ public class UserController {
         try{
             Long userId = jwtService.getUserIdx();
             return new BaseResponse<>(userService.setUserProfile(userId, patchUserReq));
+        } catch (BaseException exception) {
+            return new BaseResponse<>(exception.getStatus());
+        }
+    }
+
+    @GetMapping("/profile")
+    @Operation(summary = "유저의 성별, 나이, 대기시간, 근거리, 선호/비선호 음식 정보 조회", description = "유저의 기본 프로필을 조회하기 위한 API")
+    @ApiResponse(responseCode = "1000", description = "요청에 성공하였습니다.", content = @Content(mediaType = "application/json"))
+    public BaseResponse<GetUserProfileRes> getUserProfile() {
+        try{
+            Long userId = jwtService.getUserIdx();
+            return new BaseResponse<>(userService.getUserProfile(userId));
         } catch (BaseException exception) {
             return new BaseResponse<>(exception.getStatus());
         }

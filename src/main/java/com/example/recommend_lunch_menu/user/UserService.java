@@ -56,6 +56,20 @@ public class UserService {
     }
 
     @Transactional
+    public GetUserProfileRes getUserProfile(Long userId) throws BaseException {
+        User user = utilService.findByUserIdWithValidation(userId);
+        int age = user.getAge();
+        String gender = user.getGender();
+        boolean localPreferred = user.isLocalPreferred();
+        boolean tolerateWaitTime = user.isTolerateWaitTime();
+        String foodPreferred = user.getFoodPreferred();
+        String foodDislike = user.getFoodDislike();
+        int priceLimit = user.getPriceLimit();
+
+        return new GetUserProfileRes(age, gender, localPreferred, tolerateWaitTime, foodPreferred, foodDislike, priceLimit);
+    }
+
+    @Transactional
     public List<GetIndoorRecommendationRes> getIndoorRecommendation(Long userId) throws BaseException, URISyntaxException {
         GetUserPreferenceRes getUserPreferenceRes = getUserPreference(userId);
         // 헤더 설정
@@ -107,7 +121,7 @@ public class UserService {
 //            RestTemplate restTemplate = new RestTemplate();
 //            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
 //            ResponseEntity<String> responseEntity = restTemplate.exchange(
-//                    Constants.AI_SERVER_URL,
+//                    Constants.AI_SERVER_URL + "/indoor/recommend",
 //                    HttpMethod.POST,
 //                    requestEntity,
 //                    String.class

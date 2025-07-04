@@ -35,10 +35,10 @@ public class User extends BaseTimeEntity {
     private String gender; // Man, Woman
 
     @Column(nullable = true)
-    private boolean isLocalPreferred; // 지역성에 대한 선호도
+    private boolean localPreferred; // 지역성에 대한 선호도
 
     @Column(nullable = true)
-    private boolean isTolerateWaitTime; // 대기시간에 대한 선호도
+    private boolean tolerateWaitTime; // 대기시간에 대한 선호도
 
     @Column(nullable = true)
     private String foodPreferred;
