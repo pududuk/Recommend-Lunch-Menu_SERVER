@@ -77,7 +77,7 @@ public class UserService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 요청 바디 설정
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("age", getUserPreferenceRes.getAge().toString());
         body.put("gender", getUserPreferenceRes.getGender());
         body.put("weather", getUserPreferenceRes.getWeatherInfo());
@@ -86,87 +86,55 @@ public class UserService {
         body.put("waiting_limit", Integer.toString(getUserPreferenceRes.getWaitLimit()));
 
         try {
-            /* <--------------------- Dummy -------------------> */
-            String answer = "rank,store,corner,menu,waiting_pred,score,comment\n1,ourhome,A3/C4,후랑크모듬채소볶음/간장찜닭/계란찜/시금치나물/배추김치/흑미밥/쌀밥,15,95,고기와 찜닭, 든든한 선택!\n2,ourhome,A1/2 C1/2,후랑크모듬채소볶음/어묵국/야채계란말이/쌀밥/배추김치,13,85,고기를 포함한 맛있는 점심!\n3,ourhome,C3/4,감자국/바싹불고기/김치볶음/오징어젓무침/브로콜리된장무침/도토리묵/배추김치/쌀밥/흑미밥,16,80,고소한 불고기가 기다립니다!\n4,ourhome,B3,불고기철판구이/된장찌개/중화두부조림/사라다/미역줄기볶음,24,75,뜨끈한 불고기로 기력 보충!\n5,ourhome,B1,불고기철판구이/된장찌개/중화두부조림/사라다/미역줄기볶음,24,75,흐린 날씨에 맞는 따뜻한 메뉴!";
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    Constants.GPT_LINKED_SERVER_URL + "/indoor/recommend",
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
+
+            String response = responseEntity.getBody();
+            Gson gsonObj = new Gson();
+            Map<?, ?> data = gsonObj.fromJson(response, Map.class);
+            boolean isSuccess = (Boolean) data.get("successs");
+            String answer = "";
             List<GetIndoorRecommendationRes> resultList = new ArrayList<>();
-            // 줄 단위로 나누기
-            String[] lines = answer.split("\n");
 
-            if (lines.length > 1) {
-                // 첫 줄은 헤더
-                String[] header = lines[0].split(",");
+            if (isSuccess) {
+                answer = (String) data.get("answer");
 
-                for (int i = 1; i < lines.length; i++) {
-                    String[] values = lines[i].split(",", -1);
-                    if (values.length < 6) continue;
+                // 줄 단위로 나누기
+                String[] lines = answer.split("\n");
 
-                    GetIndoorRecommendationRes res = new GetIndoorRecommendationRes();
-                    res.setRank(Integer.parseInt(values[0].trim()));
-                    res.setStore(values[1].trim());
-                    res.setCorner(values[2].trim());
-                    res.setMenu(values[3].trim());
-                    res.setWaiting_pred(Integer.parseInt(values[4].trim()));
-                    res.setScore(Integer.parseInt(values[5].trim()));
-                    res.setComment(values[6].trim());
+                if (lines.length > 1) {
+                    // 첫 줄은 헤더
+                    String[] header = lines[0].split(",");
 
-                    resultList.add(res);
+                    for (int i = 1; i < lines.length; i++) {
+                        String[] values = lines[i].split(",", -1);
+                        if (values.length < 6) continue;
+
+                        GetIndoorRecommendationRes res = new GetIndoorRecommendationRes();
+                        res.setRank(Integer.parseInt(values[0].trim()));
+                        res.setStore(values[1].trim());
+                        res.setCorner(values[2].trim());
+
+                        res.setWaiting_pred(Integer.parseInt(values[4].trim()));
+                        res.setScore(Integer.parseInt(values[5].trim()));
+                        res.setComment(values[6].trim());
+
+                        resultList.add(res);
+                    }
+
+                    return resultList;
+                } else {
+                    throw new BaseException(BaseResponseStatus.INVALID_JWT);
                 }
-
-                return resultList;
             } else {
                 throw new BaseException(BaseResponseStatus.INVALID_JWT);
             }
-            /* <--------------------- Dummy -------------------> */
-
-//            RestTemplate restTemplate = new RestTemplate();
-//            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
-//            ResponseEntity<String> responseEntity = restTemplate.exchange(
-//                    Constants.AI_SERVER_URL + "/indoor/recommend",
-//                    HttpMethod.POST,
-//                    requestEntity,
-//                    String.class
-//            );
-//
-//            String response = responseEntity.getBody();
-//            Gson gsonObj = new Gson();
-//            Map<?, ?> data = gsonObj.fromJson(response, Map.class);
-//            boolean isSuccess = (Boolean) data.get("successs");
-//            String answer = "";
-//            List<GetIndoorRecommendationRes> resultList = new ArrayList<>();
-//
-//            if (isSuccess) {
-//                answer = (String) data.get("answer");
-//
-//                // 줄 단위로 나누기
-//                String[] lines = answer.split("\n");
-//
-//                if (lines.length > 1) {
-//                    // 첫 줄은 헤더
-//                    String[] header = lines[0].split(",");
-//
-//                    for (int i = 1; i < lines.length; i++) {
-//                        String[] values = lines[i].split(",", -1);
-//                        if (values.length < 6) continue;
-//
-//                        GetIndoorRecommendationRes res = new GetIndoorRecommendationRes();
-//                        res.setRank(Integer.parseInt(values[0].trim()));
-//                        res.setStore(values[1].trim());
-//                        res.setCorner(values[2].trim());
-//
-//                        res.setWaiting_pred(Integer.parseInt(values[4].trim()));
-//                        res.setScore(Integer.parseInt(values[5].trim()));
-//                        res.setComment(values[6].trim());
-//
-//                        resultList.add(res);
-//                    }
-//
-//                    return resultList;
-//                } else {
-//                    throw new BaseException(BaseResponseStatus.INVALID_JWT);
-//                }
-//            } else {
-//                throw new BaseException(BaseResponseStatus.INVALID_JWT);
-//            }
 
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -183,7 +151,7 @@ public class UserService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 요청 바디 설정
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("age", getUserPreferenceRes.getAge().toString());
         body.put("gender", getUserPreferenceRes.getGender());
         body.put("weather", getUserPreferenceRes.getWeatherInfo());
@@ -193,16 +161,27 @@ public class UserService {
         body.put("price_limit", getUserPreferenceRes.getPriceLimit().toString());
 
         try {
-            /* <--------------------- Dummy -------------------> */
-            String message = "rank,store,menu,price,score,comment\n1,일편등심 마곡나루점,한우 쌈장찌개,7000,95,맑은 날에 시원하게 즐길 수 있는 메뉴입니다.\n2,무닌 마곡,명란구이,14000,90,세련된 맛의 메뉴로 맑은 날에 적합합니다.\n3,어부몽 코엑스마곡점,[황토가마] 고등어구이 반상,15000,85,맛있는 고등어구이로 선호도가 높을 것입니다.\n4,전일맥주 마곡역점,수제비조개탕,15000,80,맑은 날에도 부드러운 맛을 즐길 수 있는 메뉴입니다.\n5,봄이보리밥 마곡점,황금 고등어구이 반상,15000,75,맑은 날에 즐길 수 있는 정갈한 메뉴입니다.";
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    Constants.GPT_LINKED_SERVER_URL + "/outdoor/recommend",
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
+
+            String response = responseEntity.getBody();
+            Gson gsonObj = new Gson();
+            Map<?, ?> data = gsonObj.fromJson(response, Map.class);
+            String message = data.get("message").toString();
             List<GetOutdoorRecommendationRes> resultList = new ArrayList<>();
             // 줄 단위로 나누기
             String[] lines = message.split("\n");
-            log.info("lines[0]: {}", lines[0]);
+
             if (lines.length > 1) {
                 // 첫 줄은 헤더
                 String[] header = lines[0].split(",");
-                log.info("lines: 여기2");
+
                 for (int i = 1; i < lines.length; i++) {
                     String[] values = lines[i].split(",", -1);
                     if (values.length < 6) continue;
@@ -222,48 +201,6 @@ public class UserService {
             } else {
                 throw new BaseException(BaseResponseStatus.INVALID_JWT);
             }
-            /* <--------------------- Dummy -------------------> */
-
-//            RestTemplate restTemplate = new RestTemplate();
-//            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
-//            ResponseEntity<String> responseEntity = restTemplate.exchange(
-//                    Constants.AI_SERVER_URL,
-//                    HttpMethod.POST,
-//                    requestEntity,
-//                    String.class
-//            );
-//
-//            String response = responseEntity.getBody();
-//            Gson gsonObj = new Gson();
-//            Map<?, ?> data = gsonObj.fromJson(response, Map.class);
-//            boolean isSuccess = (Boolean) data.get("successs");
-//            List<GetOutdoorRecommendationRes> resultList = new ArrayList<>();
-//            // 줄 단위로 나누기
-//            String[] lines = message.split("\n");
-//
-//            if (lines.length > 1) {
-//                // 첫 줄은 헤더
-//                String[] header = lines[0].split(",");
-//
-//                for (int i = 1; i < lines.length; i++) {
-//                    String[] values = lines[i].split(",", -1);
-//                    if (values.length < 6) continue;
-//
-//                    GetOutdoorRecommendationRes res = new GetOutdoorRecommendationRes();
-//                    res.setRank(Integer.parseInt(values[0].trim()));
-//                    res.setStore(values[1].trim());
-//                    res.setMenu(values[2].trim());
-//                    res.setPrice(Integer.parseInt(values[3].trim()));
-//                    res.setScore(Integer.parseInt(values[4].trim()));
-//                    res.setComment(values[5].trim());
-//
-//                    resultList.add(res);
-//                }
-//
-//                return resultList;
-//            } else {
-//                throw new BaseException(BaseResponseStatus.INVALID_JWT);
-//            }
 
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -297,13 +234,13 @@ public class UserService {
             distance = LONG_DISTANCE;
         }
 
-        String weatherInfo = getWeatherInfo();
+        Map<String, Integer> weatherInfo = getWeatherInfo();
 
         return new GetUserPreferenceRes(age, gender, foodPreferred, foodDislike, waitLimit, distance, priceLimit, weatherInfo);
     }
 
     @Transactional
-    private String getWeatherInfo() throws URISyntaxException {
+    private Map<String, Integer> getWeatherInfo() throws URISyntaxException {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         RestTemplate restTemplate = new RestTemplate();
@@ -346,7 +283,7 @@ public class UserService {
                     }
                 }
             }
-            return gsonObj.toJson(resultMap);
+            return resultMap;
 
         } catch (Exception e) {
             log.error(e.getMessage());

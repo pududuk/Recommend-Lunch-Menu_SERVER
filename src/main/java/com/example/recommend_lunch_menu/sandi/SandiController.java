@@ -16,13 +16,12 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
+@CrossOrigin(origins = "http://client")
 @RequestMapping("/api/sandi")
 public class SandiController {
 
     private final SandiService sandiService;
-    private final JwtService jwtService;
 
-    // Check Sandi Account Validation
     @Operation(summary = "Sandi 유저 인증", description = "유저의 초기 로그인을 위한 API")
     @ApiResponse(responseCode = "1000", description = "요청에 성공하였습니다.", content = @Content(mediaType = "application/json"))
     @Parameters(value = {

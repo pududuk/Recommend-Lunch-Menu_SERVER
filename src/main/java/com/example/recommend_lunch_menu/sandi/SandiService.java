@@ -2,9 +2,11 @@ package com.example.recommend_lunch_menu.sandi;
 
 import com.example.recommend_lunch_menu.exception.BaseException;
 import com.example.recommend_lunch_menu.exception.BaseResponseStatus;
-import com.example.recommend_lunch_menu.scheduler.store.AdminInfo;
-import com.example.recommend_lunch_menu.scheduler.store.DailyMenuStore;
-import com.example.recommend_lunch_menu.scheduler.store.WeekDayTableStore;
+import com.example.recommend_lunch_menu.menu.MenuService;
+import com.example.recommend_lunch_menu.menu.dto.GetOcrServerRes;
+import com.example.recommend_lunch_menu.schedule.store.AdminInfo;
+import com.example.recommend_lunch_menu.schedule.store.DailyMenuStore;
+import com.example.recommend_lunch_menu.schedule.store.WeekDayTableStore;
 import com.example.recommend_lunch_menu.token.JwtProvider;
 import com.example.recommend_lunch_menu.token.dto.JwtResponseDto;
 import com.example.recommend_lunch_menu.user.User;
@@ -18,6 +20,7 @@ import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -42,6 +45,7 @@ public class SandiService {
     private final Secret secret;
     private final AdminInfo adminInfo;
     private final JwtProvider jwtProvider;
+    private final MenuService menuService;
 
     @Transactional
     public String verifyUser(PostUserReq postUserReq) throws BaseException {
@@ -140,7 +144,12 @@ public class SandiService {
         int postId = getBoardList(accessToken, StoreType.OUR_HOME, "주간");
         List<String> imgUrls = getImageUrlsFromPost(accessToken, postId);
         String imgUrl = imgUrls.isEmpty() ? null : imgUrls.get(0);
-        weekDayTableStore.setOurHomeTableImgUrl(imgUrl);
+        String existingWeekDayTable = weekDayTableStore.getOurHomeTableImgUrl();
+
+        if (existingWeekDayTable == null || !existingWeekDayTable.equals(imgUrl)) {
+            weekDayTableStore.setOurHomeTableImgUrl(imgUrl);
+        }
+
         log.info("Image URL: {}", weekDayTableStore.getOurHomeTableImgUrl());
         return imgUrl;
     }
@@ -151,8 +160,14 @@ public class SandiService {
         int postId = getBoardList(accessToken, StoreType.CJ_FRESH, "주간");
         List<String> imgUrls = getImageUrlsFromPost(accessToken, postId);
         String imgUrl = imgUrls.isEmpty() ? null : imgUrls.get(0);
-        weekDayTableStore.setCjFreshTableImgUrl(imgUrl);
-        log.info("Image URL: {}", weekDayTableStore.getCjFreshTableImgUrl());
+        String existingWeekDayTable = weekDayTableStore.getCjFreshTableImgUrl();
+
+        if (existingWeekDayTable == null || !existingWeekDayTable.equals(imgUrl)) {
+            weekDayTableStore.setCjFreshTableImgUrl(imgUrl);
+
+        }
+        log.info("Image URL: {}", weekDayTableStore.getOurHomeTableImgUrl());
+
         return imgUrl;
     }
 
@@ -162,7 +177,12 @@ public class SandiService {
         int postId = getBoardList(accessToken, StoreType.PULMUONE, "주간");
         List<String> imgUrls = getImageUrlsFromPost(accessToken, postId);
         String imgUrl = imgUrls.isEmpty() ? null : imgUrls.get(0);
-        weekDayTableStore.setPulmuoneTableImgUrl(imgUrl);
+        String existingWeekDayTable = weekDayTableStore.getCjFreshTableImgUrl();
+
+        if (existingWeekDayTable == null || !existingWeekDayTable.equals(imgUrl)) {
+            weekDayTableStore.setPulmuoneTableImgUrl(imgUrl);
+        }
+
         log.info("Image URL: {}", weekDayTableStore.getPulmuoneTableImgUrl());
         return imgUrl;
     }
@@ -172,8 +192,15 @@ public class SandiService {
         String accessToken = getAccessTokenForAdmin();
         int postId = getBoardList(accessToken, StoreType.OUR_HOME, "오늘의");
         List<String> imgUrls = getImageUrlsFromPost(accessToken, postId);
-        dailyMenuStore.setOurHomeImgUrls(imgUrls);
+        List<String> existingDailyMenu = dailyMenuStore.getOurHomeImgUrls();
+
+        if (existingDailyMenu == null || !existingDailyMenu.equals(imgUrls)) {
+            dailyMenuStore.setOurHomeImgUrls(imgUrls);
+            menuService.requestToOcrServer(StoreType.OUR_HOME);
+        }
+
         log.info("Image URL: {}", dailyMenuStore.getOurHomeImgUrls());
+
         return imgUrls;
     }
 
@@ -182,11 +209,19 @@ public class SandiService {
         String accessToken = getAccessTokenForAdmin();
         int postId = getBoardList(accessToken, StoreType.CJ_FRESH, "오늘의");
         List<String> imgUrls = getImageUrlsFromPost(accessToken, postId);
-        dailyMenuStore.setCjFreshImgUrls(imgUrls);
+        List<String> existingDailyMenu = dailyMenuStore.getCjFreshImgUrls();
+
+        if (existingDailyMenu == null || !existingDailyMenu.equals(imgUrls)) {
+            dailyMenuStore.setCjFreshImgUrls(imgUrls);
+            menuService.requestToOcrServer(StoreType.CJ_FRESH);
+        }
+
         log.info("Image URL: {}", dailyMenuStore.getCjFreshImgUrls());
+
         return imgUrls;
     }
 
+    @Transactional
     private List<String> getImageUrlsFromPost(String accessToken, Integer postId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = createCommonHeaders(accessToken);

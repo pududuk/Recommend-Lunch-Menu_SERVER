@@ -1,4 +1,4 @@
-package com.example.recommend_lunch_menu.scheduler.store;
+package com.example.recommend_lunch_menu.schedule.store;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

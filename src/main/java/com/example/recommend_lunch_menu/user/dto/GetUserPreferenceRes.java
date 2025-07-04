@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -15,5 +17,5 @@ public class GetUserPreferenceRes {
     Integer waitLimit;
     Integer distance;
     Integer priceLimit;
-    String weatherInfo;
+    Map<String, Integer> weatherInfo;
 }

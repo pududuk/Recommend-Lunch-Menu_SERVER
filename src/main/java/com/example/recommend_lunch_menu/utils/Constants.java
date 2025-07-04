@@ -7,5 +7,6 @@ public class Constants {
     public static String SANDI_PULMUONE_SPACE_ID = "BST_000978";
     public static String SANDI_CJFRESH_SPACE_ID = "ST_0000290";
     public static String JWT_ENCODING_KEY = "135b8378904571a649516713c9b3bbffc14f3464a3131504aec324cde5327b4d";
-    public static String AI_SERVER_URL = "http://127.0.0.1:8000";
+    public static String GPT_LINKED_SERVER_URL = "http://ec2-43-201-26-206.ap-northeast-2.compute.amazonaws.com"; // 유빈님 서버
+    public static String OCR_SERVER_URL = "http://127.0.0.1:8000"; // 우석님 서버
 }

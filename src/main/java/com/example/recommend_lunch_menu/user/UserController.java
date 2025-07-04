@@ -19,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://client")
 @Tag(name = "User", description = "User API")
 public class UserController {
 

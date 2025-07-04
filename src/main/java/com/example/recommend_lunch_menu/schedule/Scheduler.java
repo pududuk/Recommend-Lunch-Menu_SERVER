@@ -1,8 +1,6 @@
-package com.example.recommend_lunch_menu.scheduler;
+package com.example.recommend_lunch_menu.schedule;
 
 import com.example.recommend_lunch_menu.sandi.SandiService;
-import com.example.recommend_lunch_menu.scheduler.store.AdminInfo;
-import com.example.recommend_lunch_menu.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 @Slf4j
-public class ScheduleController {
+public class Scheduler {
 
     private final SandiService sandiService;
 
@@ -57,7 +55,7 @@ public class ScheduleController {
     public void getPulmuoneWeekdayTable() { // 주간 식단표 Update
         log.info("<-------------풀무원 주간 식단표 이미지를 로드합니다.------------->");
         try {
-            sandiService.getCjFreshWeekdayTable();
+            sandiService.getPulmuoneWeekdayTable();
         } catch (Exception e) {
             log.error("Error Occurred: {}", e.getMessage());
         }
@@ -69,7 +67,7 @@ public class ScheduleController {
     public void getOurHomeDailyMenu() { // 일간 메뉴 Update
         log.info("<-------------아워홈 데일리 메뉴 이미지를 로드합니다.------------->");
         try {
-            sandiService.getCjFreshWeekdayTable();
+            sandiService.getOurHomeDailyMenu();
         } catch (Exception e) {
             log.error("Error Occurred: {}", e.getMessage());
         }
@@ -80,7 +78,7 @@ public class ScheduleController {
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     public void getCjFreshDailyMenu() { // 일간 메뉴 Update
         log.info("<-------------CJ 데일리 메뉴 이미지를 로드합니다.------------->");
-        sandiService.getCjFreshWeekdayTable();
+        sandiService.getCjFreshDailyMenu();
         log.info("<-------------CJ 데일리 메뉴 이미지 로드가 완료되었습니다.------------->");
     }
 
